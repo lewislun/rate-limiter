@@ -12,6 +12,9 @@
   "author": "Lewis Cheung",
   "license": "MIT",
   "devDependencies": {
-    "rollup": "^3.20.4"
+    "@rollup/plugin-typescript": "^11.1.0",
+    "rollup": "^3.20.4",
+    "tslib": "^2.5.0",
+    "typescript": "^5.0.4"
   }
 }

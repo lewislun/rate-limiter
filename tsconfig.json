@@ -1,0 +1,11 @@
+{
+	"include": ["src/index.js"],
+	"compilerOptions": {
+		"allowJs": true,
+		"declaration": true,
+		"emitDeclarationOnly": true,
+		"skipLibCheck": true,
+		"lib": ["es2015"],
+		"outDir": "dist"
+	}
+}

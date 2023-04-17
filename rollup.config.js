@@ -1,3 +1,5 @@
+import typescript from '@rollup/plugin-typescript'
+
 export default {
 	input: 'src/index.js',
 	output: {
@@ -7,5 +9,7 @@ export default {
 		sourcemap: true,
 		minifyInternalExports: true,
 	},
-	plugins: [],
+	plugins: [
+		typescript({ include: 'src/**/*' }),
+	],
 }
