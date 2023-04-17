@@ -1,0 +1,17 @@
+{
+  "name": "rate-limiter",
+  "version": "1.0.0",
+  "description": "",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "rollup -c rollup.config.js",
+    "watch": "rollup -c rollup.config.js -w"
+  },
+  "type": "module",
+  "repository": "https://github.com/lewislun/rate-limiter",
+  "author": "Lewis Cheung",
+  "license": "MIT",
+  "devDependencies": {
+    "rollup": "^3.20.4"
+  }
+}

@@ -1,0 +1,5 @@
+# Distributables
+/dist
+
+# NPM
+/node_modules
