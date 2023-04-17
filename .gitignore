@@ -1,5 +1,5 @@
 # Distributables
-/dist
+# /dist  # do not ignore in build branch
 
 # NPM
 /node_modules
