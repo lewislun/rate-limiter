@@ -3,9 +3,9 @@ import typescript from '@rollup/plugin-typescript'
 export default {
 	input: 'src/index.js',
 	output: {
-		name: 'rate-limiter',
+		name: 'rateLimiter',
 		file: 'dist/index.js',
-		format: 'umd',
+		format: 'es',
 		sourcemap: true,
 		minifyInternalExports: true,
 	},
