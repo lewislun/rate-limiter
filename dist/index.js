@@ -53,7 +53,7 @@ function __generator(thisArg, body) {
 
 var RateLimiter = /** @class */ (function () {
     /**
-     * @param {RateLimiterOpts} [opts]
+     * @param {types.RateLimiterOpts} [opts]
      */
     function RateLimiter(opts) {
         if (opts === void 0) { opts = {}; }
@@ -63,6 +63,7 @@ var RateLimiter = /** @class */ (function () {
         /** @type {number} */ this.retryCount = 4;
         /** @type {number} */ this.onErrPauseTimeMs = 500;
         /** @type {number} */ this.timeoutMs = 10000;
+        /** @protected @type {boolean} */ this.isStopping = false;
         this.instanceKey = opts.instanceKey;
         this.retryCount = (_a = opts.retryCount) !== null && _a !== void 0 ? _a : this.retryCount;
         this.onErrPauseTimeMs = (_b = opts.onErrPauseTimeMs) !== null && _b !== void 0 ? _b : this.onErrPauseTimeMs;
@@ -70,9 +71,7 @@ var RateLimiter = /** @class */ (function () {
         if (opts.callPerSec) {
             this.callIntervalMs = 1000 / opts.callPerSec;
         }
-        if (this.callIntervalMs) {
-            this.start();
-        }
+        this.start();
     }
     /**
      * Get an initialized RateLimiter by opts.instanceKey. If it does not exist, create one. This is useful for sharing RateLimiter if the same endpoint is used.
@@ -102,7 +101,7 @@ var RateLimiter = /** @class */ (function () {
          * @returns {boolean}
          */
         get: function () {
-            return !!this.nextIteration;
+            return !!this.nextIteration && !this.isStopping;
         },
         enumerable: false,
         configurable: true
@@ -111,6 +110,7 @@ var RateLimiter = /** @class */ (function () {
      * @public
      */
     RateLimiter.prototype.start = function () {
+        var _this = this;
         if (!this.callIntervalMs) {
             throw new Error('Cannot start jobLoop with callIntervalMs === 0 or undefined.');
         }
@@ -118,24 +118,24 @@ var RateLimiter = /** @class */ (function () {
             this.log('jobLoop is already running.');
             return;
         }
-        this.loop();
+        this.nextIteration = setTimeout(function () { return _this.loop(); }, 0);
     };
     /**
      * @protected
      */
     RateLimiter.prototype.loop = function () {
-        return __awaiter(this, void 0, void 0, function () {
-            var _this = this;
-            return __generator(this, function (_a) {
-                if (this.queue.length === 0) {
-                    this.nextIteration = setTimeout(function () { return _this.loop(); }, 100);
-                    return [2 /*return*/];
-                }
-                this.processJob(this.queue.shift());
-                this.nextIteration = setTimeout(function () { return _this.loop(); }, this.callIntervalMs);
-                return [2 /*return*/];
-            });
-        });
+        var _this = this;
+        if (this.isStopping) {
+            this.isStopping = false;
+            this.nextIteration = undefined;
+            return;
+        }
+        if (this.queue.length === 0) {
+            this.nextIteration = setTimeout(function () { return _this.loop(); }, 100);
+            return;
+        }
+        this.processJob(this.queue.shift());
+        this.nextIteration = setTimeout(function () { return _this.loop(); }, this.callIntervalMs);
     };
     /**
      * Stop the jobLoop. No-op if the loop is not running.
@@ -144,8 +144,7 @@ var RateLimiter = /** @class */ (function () {
      */
     RateLimiter.prototype.stop = function () {
         if (this.isLoopRunning) {
-            clearTimeout(this.nextIteration);
-            this.nextIteration = undefined;
+            this.isStopping = true;
         }
     };
     /**
@@ -189,10 +188,10 @@ var RateLimiter = /** @class */ (function () {
                         pauseTimeMs = this.onErrPauseTimeMs * Math.pow(2, retryCount);
                         this.log("RateLimitJob execution failed with exception: ".concat(e_1, ", pushing it back to queue to retry... (instanceKey: ").concat(this.instanceKey, ", retryCount: ").concat(retryCount, ", pauseTimeMs: ").concat(pauseTimeMs, ", queueLength: ").concat(this.queue.length, ")"));
                         job.retryCount = retryCount + 1;
-                        this.queue.push(job);
                         if (this.isLoopRunning) {
                             this.pause(pauseTimeMs);
                         }
+                        this.queue.push(job);
                         return [3 /*break*/, 3];
                     case 3: return [2 /*return*/];
                 }

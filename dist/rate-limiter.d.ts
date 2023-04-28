@@ -10,9 +10,9 @@ export default class RateLimiter {
      */
     public static getInstance(opts?: types.RateLimiterOpts): RateLimiter;
     /**
-     * @param {RateLimiterOpts} [opts]
+     * @param {types.RateLimiterOpts} [opts]
      */
-    constructor(opts?: RateLimiterOpts);
+    constructor(opts?: types.RateLimiterOpts);
     /** @type {string} */ instanceKey: string;
     /** @type {types.RateLimitedJob[]} */ queue: types.RateLimitedJob[];
     /** @type {number} */ callIntervalMs: number;
@@ -21,6 +21,7 @@ export default class RateLimiter {
     /** @type {number} */ timeoutMs: number;
     /** @type {(msg) => void} */ log: (msg: any) => void;
     /** @protected @type {NodeJS.Timeout} */ protected nextIteration: NodeJS.Timeout;
+    /** @protected @type {boolean} */ protected isStopping: boolean;
     /**
      * @returns {boolean}
      */
@@ -32,7 +33,7 @@ export default class RateLimiter {
     /**
      * @protected
      */
-    protected loop(): Promise<void>;
+    protected loop(): void;
     /**
      * Stop the jobLoop. No-op if the loop is not running.
      *
