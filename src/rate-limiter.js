@@ -12,6 +12,7 @@ export default class RateLimiter {
 	/** @type {number} */						timeoutMs = 10000
 	/** @type {(msg) => void} */				log
 	/** @protected @type {NodeJS.Timeout} */	nextIteration
+	/** @protected @type {boolean} */			isStopping = false
 
 	/**
 	 * Get an initialized RateLimiter by opts.instanceKey. If it does not exist, create one. This is useful for sharing RateLimiter if the same endpoint is used.
@@ -39,7 +40,7 @@ export default class RateLimiter {
 	}
 
 	/**
-	 * @param {RateLimiterOpts} [opts]
+	 * @param {types.RateLimiterOpts} [opts]
 	 */
 	constructor(opts = {}) {
 		this.instanceKey = opts.instanceKey
@@ -50,16 +51,14 @@ export default class RateLimiter {
 			this.callIntervalMs = 1000 / opts.callPerSec
 		}
 
-		if (this.callIntervalMs) {
-			this.start()
-		}
+		this.start()
 	}
 
 	/**
 	 * @returns {boolean}
 	 */
 	get isLoopRunning() {
-		return !!this.nextIteration
+		return !!this.nextIteration && !this.isStopping
 	}
 
 	/**
@@ -74,13 +73,19 @@ export default class RateLimiter {
 			return
 		}
 
-		this.loop()
+		this.nextIteration = setTimeout(() => this.loop(), 0)
 	}
 
 	/**
 	 * @protected
 	 */
-	async loop() {
+	loop() {
+		if (this.isStopping) {
+			this.isStopping = false
+			this.nextIteration = undefined
+			return
+		}
+
 		if (this.queue.length === 0) {
 			this.nextIteration = setTimeout(() => this.loop(), 100)
 			return
@@ -96,8 +101,7 @@ export default class RateLimiter {
 	 */
 	stop() {
 		if (this.isLoopRunning) {
-			clearTimeout(this.nextIteration)
-			this.nextIteration = undefined
+			this.isStopping = true
 		}
 	}
 
@@ -131,10 +135,10 @@ export default class RateLimiter {
 			const pauseTimeMs = this.onErrPauseTimeMs * Math.pow(2, retryCount)
 			this.log(`RateLimitJob execution failed with exception: ${e}, pushing it back to queue to retry... (instanceKey: ${this.instanceKey}, retryCount: ${retryCount}, pauseTimeMs: ${pauseTimeMs}, queueLength: ${this.queue.length})`)
 			job.retryCount = retryCount + 1
-			this.queue.push(job)
 			if (this.isLoopRunning) {
 				this.pause(pauseTimeMs)
 			}
+			this.queue.push(job)
 		}
 	}
 
